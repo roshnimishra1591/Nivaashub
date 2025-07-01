@@ -16,6 +16,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0'; // Allow access from other devices
 
 app.use(cors());
 app.use(express.json());
@@ -47,4 +48,4 @@ app.get('/api/contact', (req, res) => res.json({ message: 'Contact info' }));
 app.get('/api/rooms', (req, res) => res.json({ message: 'Rooms info' }));
 app.get('/api/services', (req, res) => res.json({ message: 'Services info' }));
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, HOST, () => console.log(`Server running on http://${HOST}:${PORT}`));
