@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import axios from 'axios';
 import roomsBg from '../assets/rooms-bg.png';
-import { FaBed, FaBath, FaVectorSquare, FaMapMarkerAlt, FaTag, FaFilter, FaSearch, FaDollarSign, FaTimes } from 'react-icons/fa'; // Added FaTimes for close button
+import { FaBed, FaBath, FaVectorSquare, FaMapMarkerAlt, FaTag, FaDollarSign, FaLock, FaSearch, FaFilter, FaTimes, FaExclamationCircle } from 'react-icons/fa'; // Added FaExclamationCircle
+import { FaStar } from 'react-icons/fa';
+import { fetchAllReviews, fetchPropertyReviews } from '../apiReviews';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function Rooms() {
+  const locationRouter = useLocation();
   const [allProperties, setAllProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [allReviews, setAllReviews] = useState([]);
 
   // --- Filter States ---
   const [propertyType, setPropertyType] = useState('');
@@ -37,6 +44,24 @@ export default function Rooms() {
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Fetch all reviews on component mount
+  useEffect(() => {
+    fetchAllReviews().then(setAllReviews).catch(() => setAllReviews([]));
+  }, []);
+
+  // On mount, set searchQuery and propertyType from URL if present
+  useEffect(() => {
+    const params = new URLSearchParams(locationRouter.search);
+    const search = params.get('search');
+    const type = params.get('type');
+    if (search) {
+      setSearchQuery(search);
+    }
+    if (type) {
+      setPropertyType(type);
+    }
+  }, [locationRouter.search]);
 
   // Effect to apply filters whenever filter states or allProperties change
   useEffect(() => {
@@ -293,7 +318,7 @@ export default function Rooms() {
         </div>
 
         {/* Property Grid (Right Side) */}
-        <div className="flex-1"> {/* This div takes up the remaining space */}
+        <div className="flex-1">
           <h2 className="text-3xl font-bold mb-8 text-blue-800 text-center md:text-left">
             Available Properties
           </h2>
@@ -324,71 +349,144 @@ export default function Rooms() {
             </div>
           ) : (
             /* Properties Grid - Adjusted for 2 columns */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8"> {/* Changed from lg:grid-cols-3 to md:grid-cols-2 */}
-              {filteredProperties.map((room, idx) => (
-                <div
-                  key={room._id || idx}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 flex flex-col overflow-hidden group"
-                >
-                  {/* Property Image */}
-                  <div className="relative overflow-hidden h-56">
-                    <img
-                      src={room.images && room.images.length > 0 ? `/uploads/${room.images[0]}` : 'https://via.placeholder.com/400x300/F3F4F6/9CA3AF?text=No+Image'}
-                      alt={room.title || 'Property Image'}
-                      className="w-full h-full object-cover rounded-t-xl transition-transform duration-500 group-hover:scale-110"
-                    />
-                    {room.isFeatured && (
-                      <span className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Property Details */}
-                  <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-2xl font-bold text-blue-800 mb-2 leading-tight">
-                      {room.title || 'Untitled Property'}
-                    </h3>
-                    <div className="flex items-center text-gray-600 text-sm mb-3">
-                      <FaMapMarkerAlt className="text-blue-500 mr-2 flex-shrink-0" />
-                      <span className="truncate">{room.address || 'Address not available'}</span>
-                    </div>
-
-                    <div className="text-blue-700 text-3xl font-extrabold mb-3 flex items-center gap-1">
-                      <FaDollarSign className="text-blue-600 text-2xl" /> NPR {room.price ? room.price.toLocaleString() : 'N/A'}
-                    </div>
-
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mb-4">
-                      <span className="flex items-center">
-                        <FaTag className="text-blue-400 mr-1" />
-                        {room.type || 'N/A'}
-                      </span>
-                      <span className="flex items-center">
-                        <FaBed className="text-blue-400 mr-1" />
-                        {room.bedrooms || 'N/A'} Beds
-                      </span>
-                      <span className="flex items-center">
-                        <FaBath className="text-blue-400 mr-1" />
-                        {room.bathrooms || 'N/A'} Baths
-                      </span>
-                      {room.area && (
-                        <span className="flex items-center">
-                          <FaVectorSquare className="text-blue-400 mr-1" />
-                          {room.area}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {filteredProperties.map((room, idx) => {
+                const isLocked = room.membersOnly;
+                // Get reviews for this property
+                const propertyReviews = allReviews.filter(r => r.propertyId === room._id);
+                const avgRating = propertyReviews.length > 0 ? (propertyReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / propertyReviews.length).toFixed(1) : null;
+                return (
+                  <div
+                    key={room._id || idx}
+                    className={`bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 flex flex-col overflow-hidden group cursor-pointer relative`}
+                    tabIndex={isLocked ? -1 : 0}
+                    aria-disabled={isLocked}
+                    onClick={e => {
+                      if (isLocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        alert('This is a members-only property. Please activate membership to view details.');
+                        return;
+                      }
+                      window.location.href = `/property/${room._id}`;
+                    }}
+                    onKeyDown={e => {
+                      if (isLocked && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        alert('This is a members-only property. Please activate membership to view details.');
+                      } else if (!isLocked && (e.key === 'Enter' || e.key === ' ')) {
+                        window.location.href = `/property/${room._id}`;
+                      }
+                    }}
+                    style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                  >
+                    <div className="relative overflow-hidden h-56">
+                      <img
+                        src={
+                          room.images && room.images.length > 0
+                            ? (room.images[0].url
+                                ? room.images[0].url
+                                : `${API_BASE_URL}/uploads/${typeof room.images[0] === 'string' ? room.images[0] : ''}`)
+                            : 'https://via.placeholder.com/400x300/F3F4F6/9CA3AF?text=No+Image'
+                        }
+                        alt={room.title || 'Property Image'}
+                        className={`w-full h-full object-cover rounded-t-xl transition-transform duration-500 group-hover:scale-110 ${isLocked ? 'filter blur-sm grayscale' : ''}`}
+                      />
+                      {room.isFeatured && (
+                        <span className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                          Featured
                         </span>
                       )}
+                      {isLocked && (
+                        <>
+                          <span className="absolute top-3 right-3 bg-blue-700 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-20">
+                            Members Only
+                          </span>
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center z-10" style={{ pointerEvents: 'auto' }} onClick={e => e.stopPropagation()}>
+                            <FaLock className="text-white text-4xl mb-2" />
+                            <button
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold mt-2 hover:bg-blue-700 transition"
+                              onClick={e => {
+                                e.stopPropagation();
+                                window.location.href = '/membership-plans';
+                              }}
+                            >
+                              Activate Membership
+                            </button>
+                            <span className="text-white mt-2 text-sm">Members only property</span>
+                          </div>
+                        </>
+                      )}
                     </div>
+                    <div className={`p-6 flex flex-col flex-grow ${isLocked ? 'opacity-60' : ''}`}>
+                      <h3 className="text-2xl font-bold text-blue-800 mb-2 leading-tight">
+                        {room.title || 'Untitled Property'}
+                      </h3>
+                      <div className="flex items-center text-gray-600 text-sm mb-3">
+                        <FaMapMarkerAlt className="text-blue-500 mr-2 flex-shrink-0" />
+                        <span className="truncate">{room.address || 'Address not available'}</span>
+                      </div>
+                      <div className="text-blue-700 text-3xl font-extrabold mb-3 flex items-center gap-1">
+                        {/* Replaced FaDollarSign with NPR sign */}
+                        <span className="font-bold text-blue-600 text-xl">NPR</span> {room.price ? room.price.toLocaleString() : 'N/A'}
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mb-4">
+                        <span className="flex items-center">
+                          <FaTag className="text-blue-400 mr-1" />
+                          {room.type || 'N/A'}
+                        </span>
+                        <span className="flex items-center">
+                          <FaBed className="text-blue-400 mr-1" />
+                          {room.bedrooms || 'N/A'} Beds
+                        </span>
+                        <span className="flex items-center">
+                          <FaBath className="text-blue-400 mr-1" />
+                          {room.bathrooms || 'N/A'} Baths
+                        </span>
+                        {room.area && (
+                          <span className="flex items-center">
+                            <FaVectorSquare className="text-blue-400 mr-1" />
+                            {room.area}
+                          </span>
+                        )}
+                      </div>
 
-                    <p className="text-gray-700 text-base mb-4 line-clamp-3">
-                      {room.description || 'No description available for this property.'}
-                    </p>
-
-                    <button className="mt-auto bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-md">
-                      View Details
-                    </button>
+                      <p className="text-gray-700 text-base mb-4 line-clamp-3">
+                        {room.description || 'No description available for this property.'}
+                      </p>
+                      {/* Avg Review and All Reviews */}
+                      <div className="mt-2 mb-2">
+                        {avgRating ? (
+                          <div className="flex items-center gap-2 text-yellow-600 font-bold text-lg">
+                            <FaStar className="text-yellow-400" /> {avgRating} / 5
+                            <span className="text-gray-500 text-sm">({propertyReviews.length} reviews)</span>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 text-sm">No reviews yet</div>
+                        )}
+                      </div>
+                      {propertyReviews.length > 0 && (
+                        <div className="max-h-32 overflow-y-auto space-y-2 border-t pt-2 mt-2">
+                          {propertyReviews.map((review, i) => (
+                            <div key={review._id || i} className="text-sm text-gray-700 border-b pb-1 mb-1">
+                              <span className="font-semibold text-blue-700">{review.reviewerName || 'Anonymous'}:</span> {review.comment} <span className="text-yellow-500"><FaStar className="inline" /> {review.rating}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                          {room.type || 'Property'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {room.createdAt ? new Date(room.createdAt).toLocaleDateString() : ''}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

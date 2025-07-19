@@ -5,6 +5,7 @@ import NavBar from '../components/NavBar'; // Ensure this path is correct
 // Import images
 import roshniImg from '../assets/admin-roshni.jpg';
 import pallaviImg from '../assets/admin-pallavi.jpg';
+import amentikaImg from '../assets/admin-amentika.jpg'; // Uncomment this line if you have an image for Amentika
 // Make sure you have an image for Amentika too, or it will be an empty circle
 // import amentikaImg from '../assets/admin-amentika.jpg'; // Assuming you'll add this
 import aboutSectionImg from '../assets/buildings.jpg'; // This seems to be used for the "What We Do" section
@@ -39,7 +40,7 @@ const teamMembers = [
   {
     name: 'Amentika Shakiya',
     title: 'Admin & Operations Manager',
-    // image: amentikaImg, // Uncomment once you have the image
+    image: amentikaImg, // Ensure you have this image
     github: 'https://github.com/amentikashakiya',
     instagram: 'https://instagram.com/amentikashakiya',
     facebook: '#', // Example social link
@@ -278,15 +279,15 @@ export default function AboutUsPage() {
           <ul className="space-y-3 text-gray-400 text-base">
             <li className="flex items-start gap-3">
               <FaMapMarkerAlt className="text-blue-400 text-xl mt-1 flex-shrink-0" />
-              <span>Rajbiraj, Madhesh Province, Nepal</span>
+              <span>Kathymandu,Bagmati Province, Nepal</span>
             </li>
             <li className="flex items-start gap-3">
               <FaPhone className="text-blue-400 text-xl mt-1 flex-shrink-0" />
-              <span>+977 98XXXXXXXX (Call/WhatsApp)</span>
+              <span><a href="/contact" className="text-blue-700 hover:underline">9816476292</a> (Call/WhatsApp)</span>
             </li>
             <li className="flex items-start gap-3">
               <FaEnvelope className="text-blue-400 text-xl mt-1 flex-shrink-0" />
-              <span>info@nivaashub.com</span>
+              <span><a href="mailto:nivaashub@outlook.com" className="text-blue-700 hover:underline">nivaashub@outlook.com</a></span>
             </li>
           </ul>
           {mapImg && (

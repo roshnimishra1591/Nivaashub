@@ -16,6 +16,7 @@ const Sidebar = ({ ownerName, activePath, onLogout }) => {
   const navItems = [
     { name: "Dashboard", icon: RiDashboardLine, path: "/owner-dashboard" },
     { name: "Add Property", icon: FaPlusCircle, path: "/owner/add-property" },
+    { name: "Property For Member", icon: FaPlusCircle, path: "/add-property-formember" },
     { name: "My Properties", icon: FaBuilding, path: "/owner/my-properties" },
     { name: "Bookings", icon: FaCalendarCheck, path: "/owner/bookings" },
     { name: "Messages", icon: FaCommentDots, path: "/owner/messages" }, // New
@@ -241,6 +242,14 @@ export default function OwnerDashboard() {
               description="Seamlessly list your next room or rental space for tenants to discover."
               buttonText="List Property"
               buttonAction={() => navigate("/owner/add-property")}
+              buttonColor="bg-blue-600 hover:bg-blue-700"
+            />
+             <DashboardCard
+              icon={FaPlusCircle}
+              title="Property for member"
+              description="Seamlessly list your next room or rental space for tenants to discover."
+              buttonText="List Property"
+              buttonAction={() => navigate("/add-property-formember")}
               buttonColor="bg-blue-600 hover:bg-blue-700"
             />
             <DashboardCard

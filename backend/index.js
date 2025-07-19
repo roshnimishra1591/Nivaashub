@@ -10,6 +10,12 @@ import adminTenantsRouter from './routes/adminTenants.js';
 import adminOwnersRouter from './routes/adminOwners.js';
 import adminPropertiesRouter from './routes/adminProperties.js';
 import adminPaymentsRouter from './routes/adminPayments.js';
+import reviewsRouter from './routes/reviews.js';
+import topReviewsRouter from './routes/topReviews.js';
+import adminMessagesRouter from './routes/adminMessages.js';
+import bookingsRouter from './routes/bookings.js';
+import ownerReviewsRouter from './routes/ownerReviews.js';
+import userReviewsRouter from './routes/userReviews.js';
 import path from 'path';
 
 dotenv.config();
@@ -38,6 +44,13 @@ app.use('/api/admin/tenants', adminTenantsRouter);
 app.use('/api/admin/owners', adminOwnersRouter);
 app.use('/api/admin/properties', adminPropertiesRouter);
 app.use('/api/admin/payments', adminPaymentsRouter);
+app.use('/api/owner', adminPropertiesRouter);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/top-reviews', topReviewsRouter);
+app.use('/api/admin/messages', adminMessagesRouter);
+app.use('/api/bookings', bookingsRouter);
+app.use('/api/reviews/owner', ownerReviewsRouter);
+app.use('/api/reviews/user', userReviewsRouter);
 
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.resolve('uploads')));

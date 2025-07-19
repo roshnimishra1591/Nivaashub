@@ -9,6 +9,7 @@ const propertySchema = new mongoose.Schema({
   images: [String],
   type: { type: String, default: 'Apartment' },
   bedrooms: { type: Number, default: 1 },
+  membersOnly: { type: Boolean, default: false }, // Add this line
   createdAt: { type: Date, default: Date.now }
 });
 

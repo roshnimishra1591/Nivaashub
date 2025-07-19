@@ -1,11 +1,63 @@
-import React from 'react';
+import React, { useRef, useState, useContext, useEffect } from 'react';
+import { AuthContext } from '../App';
 import NavBar from '../components/NavBar';
-import contactBg from '../assets/contactbg.jpg'; // Ensure this path is correct
-import contactMap from '../assets/contact map image.png'; // Ensure this path is correct
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaPaperPlane, FaHeadset, FaQuestionCircle } from 'react-icons/fa'; // Importing react-icons and missing icons
-
+import contactBg from '../assets/contactbg.jpg';
+import contactMap from '../assets/contact map image.png';
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaPaperPlane, FaHeadset, FaQuestionCircle, FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'; // Added FaSpinner, FaCheckCircle, FaTimesCircle
+import axios from 'axios';
 
 export default function ContactUsPage() {
+  const nameRef = useRef();
+  const emailRef = useRef();
+  const messageRef = useRef();
+  const [loading, setLoading] = useState(false); // State for loading indicator
+  const [successMessage, setSuccessMessage] = useState(''); // State for success message
+  const [errorMessage, setErrorMessage] = useState(''); // State for error message
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user) {
+      if (nameRef.current) nameRef.current.value = user.name || '';
+      if (emailRef.current) emailRef.current.value = user.email || '';
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true); // Start loading
+    setSuccessMessage(''); // Clear previous messages
+    setErrorMessage('');
+
+    try {
+      // Assuming 'subject' is needed by the backend, you might want to add an input for it
+      // For now, let's add a default subject if your backend expects it.
+      // If your backend doesn't need a subject, you can remove this.
+      const payload = {
+        sender: nameRef.current.value,
+        email: emailRef.current.value,
+        content: messageRef.current.value,
+        subject: "General Inquiry from Contact Us Page" // Default subject
+      };
+
+      await axios.post('http://localhost:5000/api/admin/messages', payload); // Ensure this endpoint is correct for public contact
+      setSuccessMessage('Your message has been sent successfully! We will get back to you soon.');
+      // Clear form fields
+      nameRef.current.value = '';
+      emailRef.current.value = '';
+      messageRef.current.value = '';
+    } catch (err) {
+      console.error("Failed to send message:", err.response?.data || err.message);
+      setErrorMessage(err.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false); // End loading
+      // Clear messages after a few seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+        setErrorMessage('');
+      }, 5000);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 text-gray-900 font-sans antialiased">
       {/* Header Section (Hero) */}
@@ -42,14 +94,31 @@ export default function ContactUsPage() {
           <p className="mb-8 text-gray-700 leading-relaxed">
             Have a question, feedback, or need assistance? Fill out the form below, and we'll get back to you as soon as possible.
           </p>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {successMessage && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative flex items-center gap-2 animate-fade-in">
+                <FaCheckCircle className="text-green-500 text-xl" />
+                <span className="block sm:inline">{successMessage}</span>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center gap-2 animate-fade-in">
+                <FaTimesCircle className="text-red-500 text-xl" />
+                <span className="block sm:inline">{errorMessage}</span>
+              </div>
+            )}
             <div>
               <label htmlFor="name" className="block text-gray-700 text-sm font-semibold mb-2">Your Name</label>
               <input
                 type="text"
                 id="name"
+                ref={nameRef}
                 placeholder="John Doe"
                 className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-500 transition duration-200 text-gray-800"
+                required
+                defaultValue={user ? user.name : ''}
+                readOnly={!!user}
+                style={user ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
               />
             </div>
             <div>
@@ -57,24 +126,40 @@ export default function ContactUsPage() {
               <input
                 type="email"
                 id="email"
+                ref={emailRef}
                 placeholder="john.doe@example.com"
                 className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-500 transition duration-200 text-gray-800"
+                required
+                defaultValue={user ? user.email : ''}
+                readOnly={!!user}
+                style={user ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
               />
             </div>
             <div>
               <label htmlFor="message" className="block text-gray-700 text-sm font-semibold mb-2">Your Message</label>
               <textarea
                 id="message"
+                ref={messageRef}
                 placeholder="Tell us how we can help..."
                 rows="7"
                 className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-500 transition duration-200 text-gray-800"
+                required // Added required attribute
               ></textarea>
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white font-bold px-8 py-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
+              disabled={loading} // Disable button when loading
+              className="w-full bg-blue-600 text-white font-bold px-8 py-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Send Message <FaPaperPlane />
+              {loading ? (
+                <>
+                  <FaSpinner className="animate-spin" /> Sending...
+                </>
+              ) : (
+                <>
+                  Send Message <FaPaperPlane />
+                </>
+              )}
             </button>
           </form>
         </div>
@@ -153,14 +238,14 @@ export default function ContactUsPage() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up delay-300">
           <button
-            onClick={() => window.location.href = 'mailto:info@nivaashub.com'} // Direct email link
+            onClick={() => window.location.href = 'mailto:nivaashub@outlook.com'} // Direct email link
             className="inline-flex items-center px-8 py-4 bg-yellow-400 text-blue-900 rounded-full font-bold text-lg shadow-lg
                        hover:bg-yellow-300 hover:scale-105 transition duration-300 ease-in-out transform"
           >
             Email Us Directly <FaEnvelope className="ml-2" />
           </button>
           <button
-            onClick={() => window.location.href = 'tel:+97798XXXXXXXX'} // Use a generic phone number or your main one
+            onClick={() => window.location.href = 'tel:+9779816746292'} // Use a generic phone number or your main one
             className="inline-flex items-center px-8 py-4 border-2 border-white text-white rounded-full font-bold text-lg shadow-lg
                        hover:bg-white hover:text-blue-800 hover:scale-105 transition duration-300 ease-in-out transform"
           >

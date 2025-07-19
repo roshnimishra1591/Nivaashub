@@ -228,7 +228,11 @@ export default function AdminProperties() {
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     {prop.images && prop.images.length > 0 ? (
                       <img
-                        src={prop.images[0].url || `/uploads/${prop.images[0]}`} // Adjust based on your image object structure
+                        src={
+                          prop.images[0].url
+                            ? prop.images[0].url
+                            : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/uploads/${typeof prop.images[0] === 'string' ? prop.images[0] : ''}`
+                        }
                         alt={prop.name}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                       />

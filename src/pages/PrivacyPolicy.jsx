@@ -166,8 +166,8 @@ export default function PrivacyPolicyPage() {
               If you have any questions about this Privacy Policy, please contact us:
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-2 mt-4 ml-4">
-              <li>By email: <a href="mailto:info@nivaashub.com" className="text-blue-700 hover:underline">info@nivaashub.com</a></li>
-              <li>By visiting this page on our website: <a href="/contact" className="text-blue-700 hover:underline">NivaasHub Contact</a></li>
+              <li>By email: <a href="mailto:nivaashub@outlook.com" className="text-blue-700 hover:underline">nivaashub@outlook.com</a></li>
+              <li>By visiting this page on our website: <a href="/contact" className="text-blue-700 hover:underline">9816476292</a></li>
             </ul>
           </div>
 

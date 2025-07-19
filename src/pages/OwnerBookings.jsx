@@ -35,8 +35,9 @@ export default function OwnerBookings() {
       });
       setBookings(res.data.bookings);
     } catch (err) {
-      console.error("Failed to fetch bookings:", err.response?.data || err.message);
-      setError("Failed to load your bookings. Please try again.");
+      let backendMsg = err?.response?.data?.message || err.message;
+      setError(backendMsg || "Failed to load your bookings. Please try again.");
+      console.error("Failed to fetch bookings:", backendMsg, err);
     } finally {
       setLoading(false);
     }

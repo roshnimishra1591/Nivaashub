@@ -137,7 +137,11 @@ export default function OwnerMyProperties() {
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     {prop.images && prop.images.length > 0 ? (
                       <img
-                        src={prop.images[0].url || prop.images[0]} // Adjust based on your image object structure
+                        src={
+                          prop.images[0].url
+                            ? prop.images[0].url
+                            : `${API_URL}/uploads/${typeof prop.images[0] === 'string' ? prop.images[0] : ''}`
+                        }
                         alt={prop.name}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                       />
@@ -148,6 +152,9 @@ export default function OwnerMyProperties() {
                       </div>
                     )}
                     <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-full">{prop.type}</span>
+                    {prop.membersOnly && (
+                      <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full">Members Only</span>
+                    )}
                   </div>
 
                   {/* Property Details */}

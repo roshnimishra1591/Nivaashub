@@ -14,7 +14,7 @@ router.post('/signup', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
     const owner = new Owner({ name, email, password: hashed, phone });
     await owner.save();
-    const token = jwt.sign({ id: owner._id, type: 'owner' }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: owner._id, type: 'owner' }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
     if (!owner) return res.status(400).json({ message: 'Invalid credentials' });
     const match = await bcrypt.compare(password, owner.password);
     if (!match) return res.status(400).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: owner._id, type: 'owner' }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: owner._id, type: 'owner' }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -91,11 +91,20 @@ router.get('/bookings', async (req, res) => {
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ message: 'Unauthorized' });
     const token = auth.split(' ')[1];
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtErr) {
+      console.error('JWT verification failed:', jwtErr);
+      return res.status(401).json({ message: 'Invalid or expired token', error: jwtErr.message });
+    }
     const Booking = (await import('../models/Booking.js')).default;
     // Find bookings for properties owned by this owner
     const properties = await Property.find({ owner: payload.id }).select('_id');
     const propertyIds = properties.map(p => p._id);
+    if (propertyIds.length === 0) {
+      return res.json({ bookings: [] });
+    }
     const bookings = await Booking.find({ property: { $in: propertyIds } }).populate('property user');
     res.json({ bookings });
   } catch (err) {
