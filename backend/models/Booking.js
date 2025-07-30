@@ -10,6 +10,7 @@ const bookingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const Booking = mongoose.model('Booking', bookingSchema);
+// Check if the model already exists before compiling it
+const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
 
 export default Booking;
